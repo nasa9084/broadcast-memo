@@ -6,16 +6,14 @@
   ```
 - Blackhole
   ```
-  $ brew install --cask blackhole-16ch
+  $ brew install --cask blackhole-16ch blackhole-2ch
+  ```
+- LadioCast
+  ```
+  $ mas install 411213048
   ```
 
 # Setup
-
-## Audio MIDI設定
-
-- 複数出力装置を作成
-  - 実際に音声を出力したい機器(ヘッドホンやスピーカー)とBlackHole 16chにチェックを入れる
-  - マスター装置を実際に音声を出力したい機器に設定する
 
 ## OBS
 
@@ -27,5 +25,8 @@
 
 ![全体像](img/arch.png)
 
-- 音声出力先は複数出力装置を選択
+- macの音声出力先はblackhole-2chを選択
+- Discordの音声出力先はblackhole-16chを選択
+- LadioCastの入力1/入力2にBlackhole-2ch/Blackhole-16chをそれぞれ設定
+- 出力メインにヘッドホンを指定し、入力1/入力2をメインに出力するようにする
 - QuickTime Playerを起動し、新規オーディオ収録、入力をiPadにする
