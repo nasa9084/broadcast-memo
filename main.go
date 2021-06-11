@@ -54,9 +54,17 @@ func execute() error {
 	}
 	port = ":" + port
 
-	redisURL := os.Getenv("REDIS_URL")
-	if redisURL == "" {
+	if os.Getenv("REDIS_URL") == "" {
 		return ErrEnvRequired("REDIS_URL")
+	}
+	redisURL, err := url.Parse(os.Getenv("REDIS_URL"))
+	if err != nil {
+		return fmt.Errorf("parsing $REDIS_URL: %w", err)
+	}
+	redisPassword, _ := redisURL.User.Password()
+	redisOptions := redis.Options{
+		Addr:     redisURL.Host,
+		Password: redisPassword,
 	}
 
 	username := os.Getenv("USERNAME")
@@ -69,7 +77,7 @@ func execute() error {
 		return ErrEnvRequired("PASSWORD")
 	}
 
-	c, err := NewController(username, password, redisURL)
+	c, err := NewController(username, password, &redisOptions)
 	if err != nil {
 		return fmt.Errorf("initializing controller: %w", err)
 	}
@@ -86,10 +94,8 @@ type Controller struct {
 	redis              *redis.Client
 }
 
-func NewController(username, password, redisURL string) (*Controller, error) {
-	rc := redis.NewClient(&redis.Options{
-		Addr: redisURL,
-	})
+func NewController(username, password string, redisOption *redis.Options) (*Controller, error) {
+	rc := redis.NewClient(redisOption)
 
 	templateFuncMap := template.FuncMap{
 		"incr": incr,
