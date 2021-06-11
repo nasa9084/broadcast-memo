@@ -137,8 +137,6 @@ func (c *Controller) auth(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	if username != c.username || password != c.password {
-		log.Print(c.username)
-		log.Print(c.password)
 		w.WriteHeader(http.StatusForbidden)
 		return false
 	}
