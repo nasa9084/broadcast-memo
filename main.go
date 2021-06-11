@@ -123,6 +123,7 @@ func NewController(username, password string, redisOption *redis.Options) (*Cont
 	}
 
 	r := httprouter.New()
+	r.GET("/", c.Index)
 	r.GET("/overlay", c.Overlay)
 	r.GET("/select", c.ColorSelectPage)
 	r.POST("/color", c.PostColor)
@@ -148,6 +149,10 @@ func (c *Controller) auth(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	return true
+}
+
+func (c *Controller) Index(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	http.Redirect(w, r, "/select", http.StatusFound)
 }
 
 func (c *Controller) Overlay(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
