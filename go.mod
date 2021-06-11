@@ -1,3 +1,4 @@
+// +heroku goVersion go1.16
 module github.com/nasa9084/broadcast-memo
 
 go 1.16
