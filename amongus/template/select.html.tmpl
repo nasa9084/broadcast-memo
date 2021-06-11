@@ -1,0 +1,44 @@
+{{$data := . }}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Overlay Color Selector</title>
+    <style>
+     img.colorbone {
+       width: 25px;
+       height: 25px;
+     }
+     h3 {
+       height: 10px;
+     }
+     input[type=radio] {
+       width: 20px;
+       height: 20px;
+     }
+    </style>
+  </head>
+  <body>
+    {{if $data.Error}}<h2>ERROR: {{$data.Error}}</h2>{{end}}
+    <form method="POST" action="/color">
+      Number of Members:
+      <select name="numOfMember">
+        {{range $index, $n := $data.NumOfMember}}
+        <option value="{{$n}}" {{if eq $n $data.SelectedNumOfMember}}selected{{end}}>{{$n}}</option>
+        {{end}}
+      </select><br />
+      {{range $index := $data.MemberIndex}}
+      <h3>{{incr $index}}</h3>
+      {{$nthColor := index $data.NthColors $index}}
+      {{range $_, $color := $data.Colors}}
+      <label>
+        <img src="img/{{$color}}_bone.png" class="colorbone" />
+        <input name="{{$index}}" type="radio" value="{{$color}}" {{if eq $color $nthColor }}checked{{end}}/>
+      </label>
+      {{end}}
+      <br />
+      {{end}}
+      <input type="submit">
+    </form>
+  </body>
+</html>
