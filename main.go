@@ -154,7 +154,6 @@ func (c *Controller) Overlay(w http.ResponseWriter, r *http.Request, params http
 	colors := make([]string, 0, n)
 	for i := 0; i < n; i++ {
 		color := c.redis.Get(r.Context(), strconv.Itoa(i)).Val()
-		log.Println(color)
 		if color == "" {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -197,6 +196,7 @@ func (c *Controller) ColorSelectPage(w http.ResponseWriter, r *http.Request, par
 	currentNumOfMember, err := c.redis.Get(r.Context(), "numOfMember").Int()
 	if err != nil {
 		if err != redis.Nil {
+			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
