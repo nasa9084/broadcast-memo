@@ -20,6 +20,7 @@
   </head>
   <body>
     {{if $data.Error}}<h2>ERROR: {{$data.Error}}</h2>{{end}}
+    <a href="/overlay" target="_blank">Show Overlay</a>
     <form method="POST" action="/color">
       Number of Members:
       <select name="numOfMember">

@@ -82,6 +82,7 @@ func execute() error {
 		return fmt.Errorf("initializing controller: %w", err)
 	}
 
+	log.Printf("Listening on %s", port)
 	return http.ListenAndServe(port, c)
 }
 
