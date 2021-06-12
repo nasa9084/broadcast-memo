@@ -30,3 +30,10 @@
 - LadioCastの入力1/入力2にBlackhole-2ch/Blackhole-16chをそれぞれ設定
 - 出力メインにヘッドホンを指定し、入力1/入力2をメインに出力するようにする
 - QuickTime Playerを起動し、新規オーディオ収録、入力をiPadにする
+
+## colorselector
+
+Discord Overlayの横に表示してる色表示をwebでいい感じに管理するやつ
+![これ](img/color.png)
+
+herokuにデプロイして使用する想定。データストアとしてheroku redisを使用
