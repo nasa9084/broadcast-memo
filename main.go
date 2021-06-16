@@ -18,10 +18,8 @@ import (
 )
 
 var (
-	//go:embed amongus/template/overlay.html.tmpl
-	overlayTemplateHTML string
-	//go:embed amongus/template/select.html.tmpl
-	selectTemplateHTML string
+	//go:embed amongus/template/*.tmpl
+	templateFS embed.FS
 	//go:embed amongus/img
 	colorImages embed.FS
 )
@@ -102,20 +100,15 @@ func NewController(username, password string, redisOption *redis.Options) (*Cont
 		"incr": incr,
 	}
 
-	overlayTemplate, err := template.New("overlay").Funcs(templateFuncMap).Parse(overlayTemplateHTML)
+	templates, err := template.New("").Funcs(templateFuncMap).ParseFS(templateFS, "amongus/template/*")
 	if err != nil {
-		return nil, fmt.Errorf("parsing overlay template: %w", err)
-	}
-
-	selectTemplate, err := template.New("select").Funcs(templateFuncMap).Parse(selectTemplateHTML)
-	if err != nil {
-		return nil, fmt.Errorf("parsing select template: %w", err)
+		return nil, err
 	}
 
 	c := &Controller{
 		templates: map[string]*template.Template{
-			"overlay": overlayTemplate,
-			"select":  selectTemplate,
+			"overlay": templates.Lookup("overlay.html.tmpl"),
+			"select":  templates.Lookup("select.html.tmpl"),
 		},
 
 		username: username,
