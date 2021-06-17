@@ -8,9 +8,12 @@
      img.colorbone {
        width: 25px;
        height: 25px;
+       position: relative;
+       top: 3px;
      }
-     h3 {
-       height: 10px;
+     h2#index {
+       display: inline-block;
+       width: 40px;
      }
      input[type=radio] {
        width: 20px;
@@ -30,7 +33,7 @@
         {{end}}
       </select><br />
       {{range $index := $data.MemberIndex}}
-      <h3>{{incr $index}}</h3>
+      <h2 id="index">{{incr $index}}</h2>
       {{$nthColor := index $data.NthColors $index}}
       {{range $_, $color := $data.Colors}}
       <label>
