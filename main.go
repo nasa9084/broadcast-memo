@@ -37,7 +37,18 @@ var colors = []string{
 	"brown",
 	"cyan",
 	"lime",
+	"maroon",
+	"rose",
+	"banana",
+	"gray",
+	"tan",
+	"coral",
 }
+
+const (
+	minNumOfMember = 4
+	maxNumOfMember = 15
+)
 
 func main() {
 	if err := execute(); err != nil {
@@ -87,7 +98,7 @@ func execute() error {
 type Controller struct {
 	http.Handler
 
-	templates map[string]*template.Template
+	templates *template.Template
 
 	username, password string
 	redis              *redis.Client
@@ -106,14 +117,10 @@ func NewController(username, password string, redisOption *redis.Options) (*Cont
 	}
 
 	c := &Controller{
-		templates: map[string]*template.Template{
-			"overlay": templates.Lookup("overlay.html.tmpl"),
-			"select":  templates.Lookup("select.html.tmpl"),
-		},
-
-		username: username,
-		password: password,
-		redis:    rc,
+		templates: templates,
+		username:  username,
+		password:  password,
+		redis:     rc,
 	}
 
 	r := httprouter.New()
@@ -167,7 +174,7 @@ func (c *Controller) Overlay(w http.ResponseWriter, r *http.Request, params http
 	}
 
 	var buf bytes.Buffer
-	if err := c.templates["overlay"].Execute(&buf, colors); err != nil {
+	if err := c.templates.Lookup("overlay.html.tmpl").Execute(&buf, colors); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -207,15 +214,15 @@ func (c *Controller) ColorSelectPage(w http.ResponseWriter, r *http.Request, par
 		}
 	}
 
-	nthColors := make([]string, 10)
-	for i := 0; i < 10; i++ {
+	nthColors := make([]string, maxNumOfMember)
+	for i := 0; i < maxNumOfMember; i++ {
 		nthColor := c.redis.Get(r.Context(), strconv.Itoa(i)).Val()
 		nthColors[i] = nthColor
 	}
 
 	data := colorSelectPageData{
-		NumOfMember:         []int{4, 5, 6, 7, 8, 9, 10},
-		MemberIndex:         []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+		NumOfMember:         getNumOfMemberList(),
+		MemberIndex:         getMemberIndex(),
 		SelectedNumOfMember: currentNumOfMember,
 		Colors:              colors,
 		NthColors:           nthColors,
@@ -223,7 +230,7 @@ func (c *Controller) ColorSelectPage(w http.ResponseWriter, r *http.Request, par
 	}
 
 	var buf bytes.Buffer
-	if err := c.templates["select"].Execute(&buf, data); err != nil {
+	if err := c.templates.Lookup("select.html.tmpl").Execute(&buf, data); err != nil {
 		log.Printf("ERROR on executing template: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -278,6 +285,26 @@ func ErrEnvRequired(name string) error {
 
 func ErrorQuery(errorMessage string) string {
 	return "?error=" + url.QueryEscape(errorMessage)
+}
+
+func getNumOfMemberList() []int {
+	list := make([]int, 0, maxNumOfMember-minNumOfMember+1)
+
+	for i := minNumOfMember; i <= maxNumOfMember; i++ {
+		list = append(list, i)
+	}
+
+	return list
+}
+
+func getMemberIndex() []int {
+	list := make([]int, 0, maxNumOfMember)
+
+	for i := 0; i < maxNumOfMember; i++ {
+		list = append(list, i)
+	}
+
+	return list
 }
 
 func incr(a int) int {
