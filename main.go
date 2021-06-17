@@ -61,15 +61,18 @@ func execute() error {
 	if port == "" {
 		port = "8080"
 	}
+
 	port = ":" + port
 
 	if os.Getenv("REDIS_URL") == "" {
 		return ErrEnvRequired("REDIS_URL")
 	}
+
 	redisURL, err := url.Parse(os.Getenv("REDIS_URL"))
 	if err != nil {
 		return fmt.Errorf("parsing $REDIS_URL: %w", err)
 	}
+
 	redisPassword, _ := redisURL.User.Password()
 	redisOptions := redis.Options{
 		Addr:     redisURL.Host,
@@ -124,6 +127,7 @@ func NewController(username, password string, redisOption *redis.Options) (*Cont
 	}
 
 	r := httprouter.New()
+
 	r.GET("/", c.Index)
 	r.GET("/overlay", c.Overlay)
 	r.GET("/select", c.ColorSelectPage)
@@ -180,7 +184,10 @@ func (c *Controller) Overlay(w http.ResponseWriter, r *http.Request, params http
 	}
 
 	w.WriteHeader(http.StatusOK)
-	buf.WriteTo(w)
+
+	if _, err := buf.WriteTo(w); err != nil {
+		log.Println(err)
+	}
 }
 
 type colorSelectPageData struct {
@@ -237,7 +244,10 @@ func (c *Controller) ColorSelectPage(w http.ResponseWriter, r *http.Request, par
 	}
 
 	w.WriteHeader(http.StatusOK)
-	buf.WriteTo(w)
+
+	if _, err := buf.WriteTo(w); err != nil {
+		log.Println(err)
+	}
 }
 
 func (c *Controller) PostColor(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
