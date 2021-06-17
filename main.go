@@ -99,7 +99,12 @@ func execute() error {
 	}
 
 	log.Printf("Listening on %s", port)
-	return http.ListenAndServe(port, c)
+
+	if err := http.ListenAndServe(port, c); err != nil {
+		return fmt.Errorf("serving: %w", err)
+	}
+
+	return nil
 }
 
 type Controller struct {
@@ -120,7 +125,7 @@ func NewController(username, password string, redisOption *redis.Options) (*Cont
 
 	templates, err := template.New("").Funcs(templateFuncMap).ParseFS(templateFS, "amongus/template/*")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing template: %w", err)
 	}
 
 	c := &Controller{
@@ -140,6 +145,7 @@ func NewController(username, password string, redisOption *redis.Options) (*Cont
 	r.ServeFiles("/img/*filepath", http.FS(MustSubFS(colorImages, "amongus/img")))
 
 	c.Handler = r
+
 	return c, nil
 }
 
@@ -149,11 +155,13 @@ func (c *Controller) auth(w http.ResponseWriter, r *http.Request) bool {
 	if !ok {
 		w.Header().Add("www-authenticate", "Basic")
 		w.WriteHeader(http.StatusUnauthorized)
+
 		return false
 	}
 
 	if username != c.username || password != c.password {
 		w.WriteHeader(http.StatusForbidden)
+
 		return false
 	}
 
@@ -168,22 +176,27 @@ func (c *Controller) Overlay(w http.ResponseWriter, r *http.Request, params http
 	n, err := c.redis.Get(r.Context(), "numOfMember").Int()
 	if err != nil {
 		http.Redirect(w, r, "/select"+ErrorQuery("numOfMember has not been set"), http.StatusFound)
+
 		return
 	}
 
 	colors := make([]string, 0, n)
+
 	for i := 0; i < n; i++ {
 		color := c.redis.Get(r.Context(), strconv.Itoa(i)).Val()
 		if color == "" {
 			http.Redirect(w, r, "/select"+ErrorQuery(fmt.Sprintf("%d-th of color has not been set", i)), http.StatusFound)
+
 			return
 		}
+
 		colors = append(colors, color)
 	}
 
 	var buf bytes.Buffer
 	if err := c.templates.Lookup("overlay.html.tmpl").Execute(&buf, colors); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+
 		return
 	}
 
@@ -213,6 +226,7 @@ func (c *Controller) ColorSelectPage(w http.ResponseWriter, r *http.Request, par
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+
 		return
 	}
 
@@ -221,11 +235,13 @@ func (c *Controller) ColorSelectPage(w http.ResponseWriter, r *http.Request, par
 		if !errors.Is(err, redis.Nil) {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
+
 			return
 		}
 	}
 
 	nthColors := make([]string, maxNumOfMember)
+
 	for i := 0; i < maxNumOfMember; i++ {
 		nthColor := c.redis.Get(r.Context(), strconv.Itoa(i)).Val()
 		nthColors[i] = nthColor
@@ -244,6 +260,7 @@ func (c *Controller) ColorSelectPage(w http.ResponseWriter, r *http.Request, par
 	if err := c.templates.Lookup("select.html.tmpl").Execute(&buf, data); err != nil {
 		log.Printf("ERROR on executing template: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
+
 		return
 	}
 
@@ -263,11 +280,13 @@ func (c *Controller) PostColor(w http.ResponseWriter, r *http.Request, params ht
 	numOfMember, err := strconv.Atoi(r.FormValue("numOfMember"))
 	if err != nil {
 		redirectTo += ErrorQuery("numOfMember cannot be parsed as int")
+
 		return
 	}
 
 	if err := c.redis.Set(r.Context(), "numOfMember", numOfMember, 0).Err(); err != nil {
 		redirectTo += ErrorQuery(err.Error())
+
 		return
 	}
 
@@ -275,10 +294,13 @@ func (c *Controller) PostColor(w http.ResponseWriter, r *http.Request, params ht
 		nthColor := r.FormValue(strconv.Itoa(i))
 		if nthColor == "" {
 			redirectTo += ErrorQuery(fmt.Sprintf("%d-th of color is not selected", i+1))
+
 			return
 		}
+
 		if err := c.redis.Set(r.Context(), strconv.Itoa(i), nthColor, 0).Err(); err != nil {
 			redirectTo += ErrorQuery(err.Error())
+
 			return
 		}
 	}
