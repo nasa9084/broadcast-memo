@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"embed"
+	"errors"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -48,6 +49,10 @@ const (
 	minNumOfMember = 4
 	maxNumOfMember = 15
 )
+
+type EnvRequiredError struct {
+	Env string
+}
 
 func main() {
 	if err := execute(); err != nil {
@@ -289,7 +294,13 @@ func MustSubFS(fsys fs.FS, dir string) fs.FS {
 }
 
 func ErrEnvRequired(name string) error {
-	return fmt.Errorf("environment variable %s is required", name)
+	return EnvRequiredError{
+		Env: name,
+	}
+}
+
+func (err EnvRequiredError) Error() string {
+	return fmt.Sprintf("environment variable %s is required", err.Env)
 }
 
 func ErrorQuery(errorMessage string) string {
