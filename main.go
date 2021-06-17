@@ -159,7 +159,7 @@ func (c *Controller) Index(w http.ResponseWriter, r *http.Request, params httpro
 func (c *Controller) Overlay(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	n, err := c.redis.Get(r.Context(), "numOfMember").Int()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Redirect(w, r, "/select"+ErrorQuery("numOfMember has not been set"), http.StatusFound)
 		return
 	}
 
@@ -167,7 +167,7 @@ func (c *Controller) Overlay(w http.ResponseWriter, r *http.Request, params http
 	for i := 0; i < n; i++ {
 		color := c.redis.Get(r.Context(), strconv.Itoa(i)).Val()
 		if color == "" {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Redirect(w, r, "/select"+ErrorQuery(fmt.Sprintf("%d-th of color has not been set", i)), http.StatusFound)
 			return
 		}
 		colors = append(colors, color)
