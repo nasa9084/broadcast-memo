@@ -61,12 +61,7 @@ func main() {
 }
 
 func execute() error {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	port = ":" + port
+	port := ":" + getenvWithDefault("PORT", "8080")
 
 	if os.Getenv("REDIS_URL") == "" {
 		return ErrEnvRequired("REDIS_URL")
@@ -327,6 +322,14 @@ func (err EnvRequiredError) Error() string {
 
 func ErrorQuery(errorMessage string) string {
 	return "?error=" + url.QueryEscape(errorMessage)
+}
+
+func getenvWithDefault(key, defaultVal string) string {
+	if val := os.Getenv(key); val != "" {
+		return val
+	}
+
+	return defaultVal
 }
 
 func getNumOfMemberList() []int {
