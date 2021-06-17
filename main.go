@@ -213,7 +213,7 @@ func (c *Controller) ColorSelectPage(w http.ResponseWriter, r *http.Request, par
 
 	currentNumOfMember, err := c.redis.Get(r.Context(), "numOfMember").Int()
 	if err != nil {
-		if err != redis.Nil {
+		if !errors.Is(err, redis.Nil) {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
