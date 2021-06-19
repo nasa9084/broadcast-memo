@@ -134,7 +134,6 @@ func NewController(username, password string, redisOption *redis.Options) (*Cont
 
 	r.GET("/", c.Index)
 	r.GET("/overlay", c.Overlay)
-	r.GET("/css", c.CSS)
 	r.GET("/select", c.ColorSelectPage)
 	r.POST("/color", c.PostColor)
 
@@ -196,43 +195,6 @@ func (c *Controller) Overlay(w http.ResponseWriter, r *http.Request, params http
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-
-	if _, err := buf.WriteTo(w); err != nil {
-		log.Println(err)
-	}
-}
-
-func (c *Controller) CSS(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	log.Println("HEELO")
-	n, err := c.redis.Get(r.Context(), "numOfMember").Int()
-	if err != nil {
-		http.Redirect(w, r, "/select"+ErrorQuery("numOfMember has not been set"), http.StatusFound)
-
-		return
-	}
-
-	colors := make([]string, 0, n)
-
-	for i := 0; i < n; i++ {
-		color := c.redis.Get(r.Context(), strconv.Itoa(i)).Val()
-		if color == "" {
-			http.Redirect(w, r, "/select"+ErrorQuery(fmt.Sprintf("%d-th of color has not been set", i)), http.StatusFound)
-
-			return
-		}
-
-		colors = append(colors, color)
-	}
-
-	var buf bytes.Buffer
-	if err := c.templates.Lookup("custom.css.tmpl").Execute(&buf, colors); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		return
-	}
-
-	w.Header().Add("Content-type", "text/css")
 	w.WriteHeader(http.StatusOK)
 
 	if _, err := buf.WriteTo(w); err != nil {
