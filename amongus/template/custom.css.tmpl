@@ -1,0 +1,27 @@
+li.voice-state {
+    padding: 20px 0 0 60px;
+}
+
+.user .name {
+    position: relative;
+    overflow: visible;
+    display: inline-block;
+}
+
+{{range $index,$color := .}}
+li.voice-state:nth-child({{incr $index}}) .user .name::before {
+    background-image: url("https://colors.web-apps.tech/img/{{$color}}_bone.png");
+}
+{{end}}
+
+.user .name::before {
+    position: absolute;
+    top: -10px;
+    left: -100px;
+    width: 40px;
+    height: 40px;
+    content: '';
+    display: inline-block;
+    background-size: contain;
+    transform: translateY(0);
+}
