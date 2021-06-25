@@ -164,7 +164,7 @@ func (c *Controller) auth(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func (c *Controller) Index(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	http.Redirect(w, r, "/select", http.StatusFound)
+	http.Redirect(w, r, "https://blog.web-apps.tech", http.StatusFound)
 }
 
 func (c *Controller) Overlay(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
