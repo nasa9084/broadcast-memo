@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -266,39 +268,57 @@ func (c *Controller) ColorSelectPage(w http.ResponseWriter, r *http.Request, par
 	}
 }
 
+type PostColorRequest struct {
+	NumOfMember int      `json:"num_of_member"`
+	Colors      []string `json:"colors"`
+}
+
+type ErrorResponse struct {
+	Error   string `json:"error"`
+	Message string `json:"message"`
+}
+
+func (errResp ErrorResponse) WriteTo(w io.Writer) (int64, error) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(errResp); err != nil {
+		log.Print(err)
+	}
+
+	return buf.WriteTo(w)
+}
+
 func (c *Controller) PostColor(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	redirectTo := "/select"
-	defer func() {
-		http.Redirect(w, r, redirectTo, http.StatusFound)
-	}()
-
-	numOfMember, err := strconv.Atoi(r.FormValue("numOfMember"))
-	if err != nil {
-		redirectTo += ErrorQuery("numOfMember cannot be parsed as int")
-
+	var postColorRequest PostColorRequest
+	if err := json.NewDecoder(r.Body).Decode(&postColorRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		ErrorResponse{Error: err.Error(), Message: "cannot parse request body as json"}.WriteTo(w)
 		return
 	}
 
-	if err := c.redis.Set(r.Context(), "numOfMember", numOfMember, 0).Err(); err != nil {
-		redirectTo += ErrorQuery(err.Error())
-
+	if err := c.redis.Set(r.Context(), "numOfMember", strconv.Itoa(postColorRequest.NumOfMember), 0).Err(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		ErrorResponse{Error: err.Error(), Message: "cannot save # of member into redis"}.WriteTo(w)
 		return
 	}
 
-	for i := 0; i < numOfMember; i++ {
-		nthColor := r.FormValue(strconv.Itoa(i))
+	for i := 0; i < postColorRequest.NumOfMember; i++ {
+		nthColor := postColorRequest.Colors[i]
 		if nthColor == "" {
-			redirectTo += ErrorQuery(fmt.Sprintf("%d-th of color is not selected", i+1))
-
+			w.WriteHeader(http.StatusBadRequest)
+			ErrorResponse{Error: "", Message: fmt.Sprintf("%d-th of color is not selected", i+1)}.WriteTo(w)
 			return
 		}
 
 		if err := c.redis.Set(r.Context(), strconv.Itoa(i), nthColor, 0).Err(); err != nil {
-			redirectTo += ErrorQuery(err.Error())
-
+			w.WriteHeader(http.StatusInternalServerError)
+			ErrorResponse{Error: err.Error(), Message: "cannot save %d-th of member into redis"}.WriteTo(w)
 			return
 		}
 	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{}`))
+	return
 }
 
 func MustSubFS(fsys fs.FS, dir string) fs.FS {

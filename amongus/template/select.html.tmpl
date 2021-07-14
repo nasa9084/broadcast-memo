@@ -4,6 +4,80 @@
   <head>
     <meta charset="UTF-8"/>
     <title>Overlay Color Selector</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script>
+     window.addEventListener("load", function() {
+       document.querySelector('#colorform').addEventListener("submit", function(event) {
+         event.preventDefault();
+         data = $('#colorform').serializeArray();
+         nom = parseInt(data[0].value, 10)
+         body = {
+           num_of_member: nom,
+           colors: []
+         }
+
+         for (let i = 1; i < nom+1; i++) {
+           try {
+             body.colors.push(data[i].value)
+           } catch {
+             body.colors.push("")
+           }
+         }
+
+         $.ajax({
+           type: 'post',
+           url: '/color',
+           dataType: 'json',
+           contentType: 'appliaction/json',
+           scriptCharset: 'utf-8',
+           data: JSON.stringify(body)
+         }).done(function(data) {
+           window.location.href = "/select";
+         }).fail(function(data) {
+           console.log("error");
+           window.location.href = '/select?error=' + data.responseJSON.message;
+         });
+       });
+       document.querySelectorAll('.member-list div').forEach(elm => {
+	 elm.ondragstart = function () {
+	   event.dataTransfer.setData('text/plain', event.target.id);
+	 };
+	 elm.ondragover = function () {
+	   event.preventDefault();
+	   let rect = this.getBoundingClientRect();
+	   if ((event.clientY - rect.top) < (this.clientHeight / 2)) {
+	     //マウスカーソルの位置が要素の半分より上
+	     this.style.borderTop = '2px solid blue';
+	     this.style.borderBottom = '';
+	   } else {
+	     //マウスカーソルの位置が要素の半分より下
+	     this.style.borderTop = '';
+	     this.style.borderBottom = '2px solid blue';
+	   }
+	 };
+	 elm.ondragleave = function () {
+	   this.style.borderTop = '';
+	   this.style.borderBottom = '';
+	 };
+	 elm.ondrop = function () {
+	   event.preventDefault();
+	   let id = event.dataTransfer.getData('text/plain');
+	   let elm_drag = document.getElementById(id);
+
+	   let rect = this.getBoundingClientRect();
+	   if ((event.clientY - rect.top) < (this.clientHeight / 2)) {
+	     //マウスカーソルの位置が要素の半分より上
+	     this.parentNode.insertBefore(elm_drag, this);
+	   } else {
+	     //マウスカーソルの位置が要素の半分より下
+	     this.parentNode.insertBefore(elm_drag, this.nextSibling);
+	   }
+	   this.style.borderTop = '';
+	   this.style.borderBottom = '';
+	 };
+       });
+     });
+    </script>
     <style>
      img.colorbone {
        width: 25px;
@@ -11,7 +85,7 @@
        position: relative;
        top: 3px;
      }
-     h2#index {
+     h2.index {
        display: inline-block;
        width: 40px;
      }
@@ -25,24 +99,28 @@
   <body>
     {{if $data.Error}}<h2>ERROR: {{$data.Error}}</h2>{{end}}
     <a href="/overlay" target="_blank">Show Overlay</a>
-    <form method="POST" action="/color">
+    <form method="POST" action="/color" id="colorform">
       Number of Members:
       <select name="numOfMember">
         {{range $index, $n := $data.NumOfMember}}
         <option value="{{$n}}" {{if eq $n $data.SelectedNumOfMember}}selected{{end}}>{{$n}}</option>
         {{end}}
       </select><br />
-      {{range $index := $data.MemberIndex}}
-      <h2 id="index">{{incr $index}}</h2>
-      {{$nthColor := index $data.NthColors $index}}
-      {{range $_, $color := $data.Colors}}
-      <label>
-        <img src="img/{{$color}}_bone.png" class="colorbone" alt="{{$color}}" title="{{$color}}" />
-        <input name="{{$index}}" type="radio" value="{{$color}}" {{if eq $color $nthColor }}checked{{end}}/>
-      </label>
-      {{end}}
-      <br />
-      {{end}}
+      <div class="member-list">
+        {{range $index := $data.MemberIndex}}
+        <div draggable="true" id="{{ $index }}">
+          <h2 class="index">{{incr $index}}</h2>
+          {{$nthColor := index $data.NthColors $index}}
+          {{range $_, $color := $data.Colors}}
+          <label>
+            <img src="img/{{$color}}_bone.png" class="colorbone" alt="{{$color}}" title="{{$color}}" />
+            <input name="{{$index}}" type="radio" value="{{$color}}" {{if eq $color $nthColor }}checked="checked"{{end}}/>
+          </label>
+          {{end}}
+          <br />
+        </div>
+        {{end}}
+      </div>
       <input type="submit">
     </form>
   </body>
