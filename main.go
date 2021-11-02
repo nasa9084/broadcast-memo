@@ -135,6 +135,7 @@ func NewController(username, password string, redisOption *redis.Options) (*Cont
 	r := httprouter.New()
 
 	r.GET("/", c.Index)
+	r.GET("/ads.txt", c.AdsTxt)
 	r.GET("/overlay", c.Overlay)
 	r.GET("/select", c.ColorSelectPage)
 	r.POST("/color", c.PostColor)
@@ -167,6 +168,11 @@ func (c *Controller) auth(w http.ResponseWriter, r *http.Request) bool {
 
 func (c *Controller) Index(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	http.Redirect(w, r, "https://blog.web-apps.tech", http.StatusFound)
+}
+
+// ads.txt for Google AdSense
+func (c *Controller) AdsTxt(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	http.Redirect(w, r, "https://blog.web-apps.tech/ads.txt", http.StatusFound)
 }
 
 func (c *Controller) Overlay(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
